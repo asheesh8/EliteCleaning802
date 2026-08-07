@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Elite Cleaning 802 — Design System
+
+   Palette sampled directly from the client's logo mark:
+   plum #4e2f72 on cream #f4ece1. Most cleaning companies run
+   blue/green; the plum is the whole differentiator, so the
+   system leans into it rather than diluting it.
+   ============================================================ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* --- Brand: Plum (primary) — sampled from the logo ---------- */
+  --color-plum-50: #f7f4fb;
+  --color-plum-100: #eee7f6;
+  --color-plum-200: #ded2ee;
+  --color-plum-300: #c4afe0;
+  --color-plum-400: #a483cd;
+  --color-plum-500: #875eb8;
+  --color-plum-600: #71469f;
+  --color-plum-700: #5e3884;
+  --color-plum-800: #4e2f72; /* exact logo plum */
+  --color-plum-900: #422a5e;
+  --color-plum-950: #2a183f;
+
+  /* --- Neutral: Cream — sampled from the logo ----------------- */
+  --color-cream-25: #fdfbf7;
+  --color-cream-50: #faf6ef;
+  --color-cream-100: #f4ece1; /* exact logo cream */
+  --color-cream-200: #e8dccb;
+  --color-cream-300: #d5c4ab;
+  --color-cream-400: #b3a189;
+  --color-cream-500: #8e7f6b;
+  --color-cream-600: #6e6255;
+  --color-cream-700: #564d44;
+  --color-cream-800: #3b352f;
+  --color-cream-900: #262220;
+  --color-cream-950: #171514;
+
+  /* --- Accent: Fern — the "fresh/clean" signal ---------------- */
+  --color-fern-50: #f1faf3;
+  --color-fern-100: #e2f5e4;
+  --color-fern-200: #c3e9c9;
+  --color-fern-300: #96d5a2;
+  --color-fern-400: #62b974;
+  --color-fern-500: #3f9d54;
+  --color-fern-600: #2d7f41;
+  --color-fern-700: #266536;
+  --color-fern-800: #22512e;
+  --color-fern-900: #1d4327;
+
+  /* --- Accent: Brass — used sparingly for "premium" ----------- */
+  --color-brass-300: #e2c68a;
+  --color-brass-400: #d0aa5e;
+  --color-brass-500: #b8934a;
+  --color-brass-600: #99763a;
+
+  /* --- Typography --------------------------------------------- */
+  --font-sans: var(--font-sans-stack), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-stack), Georgia, "Times New Roman", serif;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  /* Fluid display sizes — no media queries needed downstream */
+  --text-display: clamp(2.75rem, 1.7rem + 4.4vw, 5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+  --text-headline: clamp(1.875rem, 1.25rem + 2.6vw, 3.125rem);
+  --text-headline--line-height: 1.08;
+  --text-headline--letter-spacing: -0.02em;
+
+  /* --- Radius -------------------------------------------------- */
+  --radius-card: 1rem;
+  --radius-field: 0.625rem;
+
+  /* --- Elevation — tinted plum, never neutral grey ------------- */
+  --shadow-e1: 0 1px 2px 0 rgb(42 24 63 / 0.06), 0 1px 3px 0 rgb(42 24 63 / 0.05);
+  --shadow-e2: 0 2px 4px -2px rgb(42 24 63 / 0.08), 0 4px 14px -3px rgb(42 24 63 / 0.09);
+  --shadow-e3: 0 10px 30px -8px rgb(42 24 63 / 0.18), 0 3px 8px -3px rgb(42 24 63 / 0.09);
+
+  /* --- Motion --------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+   Semantic layer — the only thing components should reference.
+   Flipping .dark swaps every surface without touching markup.
+   ============================================================ */
+
+:root {
+  --bg: var(--color-cream-25);
+  --bg-sunken: var(--color-cream-100);
+  --surface: #ffffff;
+  --surface-2: var(--color-cream-50);
+  --border: var(--color-cream-200);
+  --border-strong: var(--color-cream-300);
+  --text: var(--color-cream-900);
+  --text-muted: var(--color-cream-600);
+  --text-subtle: var(--color-cream-500);
+  --brand: var(--color-plum-800);
+  --brand-hover: var(--color-plum-900);
+  --on-brand: var(--color-cream-50);
+  --ring: var(--color-plum-500);
+}
+
+.dark {
+  --bg: #14101a;
+  --bg-sunken: #0d0a12;
+  --surface: #1c1724;
+  --surface-2: #251e30;
+  --border: #322943;
+  --border-strong: #453a5c;
+  --text: var(--color-cream-100);
+  --text-muted: #a99cbb;
+  --text-subtle: #8a7d9c;
+  --brand: var(--color-plum-300);
+  --brand-hover: var(--color-plum-200);
+  --on-brand: var(--color-plum-950);
+  --ring: var(--color-plum-400);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border-base: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Every animation in this project is decorative, so a global
+     opt-out is safe and saves per-component guards. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-plum-200);
+    color: var(--color-plum-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Tabular figures everywhere numbers are compared vertically. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+@utility container-page {
+  width: 100%;
+  max-width: 78rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Soft plum wash behind hero / CTA bands. */
+@utility bg-bloom {
+  background-image:
+    radial-gradient(58rem 30rem at 12% -12%, color-mix(in oklab, var(--color-plum-400) 26%, transparent), transparent 68%),
+    radial-gradient(42rem 26rem at 94% 4%, color-mix(in oklab, var(--color-brass-400) 18%, transparent), transparent 70%);
+}
+
+.dark .bg-bloom {
+  background-image:
+    radial-gradient(58rem 30rem at 12% -12%, color-mix(in oklab, var(--color-plum-500) 30%, transparent), transparent 68%),
+    radial-gradient(42rem 26rem at 94% 4%, color-mix(in oklab, var(--color-plum-700) 30%, transparent), transparent 70%);
+}
+
+/* Film-grain overlay. Reads as "expensive" for ~0 bytes and no JS. */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+}
+@utility grain-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.7s var(--ease-out-soft) both;
+}
+
+/* Scroll-driven reveal. Progressive enhancement: browsers without
+   animation-timeline just render the content in its final state. */
+@utility reveal-on-scroll {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      opacity: 0;
+      animation: rise 0.8s var(--ease-out-soft) both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 26%;
+    }
+  }
+}
+
+/* Thin, unobtrusive scrollbars inside CRM panels. */
+@utility scrollbar-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}

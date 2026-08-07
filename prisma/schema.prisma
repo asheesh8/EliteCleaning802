@@ -1,0 +1,421 @@
+// Elite Cleaning 802 — data model
+//
+// SQLite for local dev. Swap `provider` to "postgresql" for deployment;
+// no model changes are required (no SQLite-only types are used).
+//
+// Two ideas drive the shape of this schema:
+//   1. ESTIMATED TIME. Every service carries a time formula, every job
+//      stores both the estimate and what actually happened, and the delta
+//      feeds back so estimates get sharper the longer Laura and Lisa use it.
+//   2. TRAVEL. Drive time between stops is real unpaid labour, so it is
+//      modelled explicitly on each job and rolled up per day.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================================
+// Access
+// ============================================================
+
+/// Staff who can sign in to the CRM. Laura and Lisa are owners.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         String    @default("owner") // owner | cleaner
+  phone        String?
+  /// Hourly cost used for job profitability maths.
+  hourlyRate   Int       @default(3500) // cents
+  color        String    @default("#4e2f72") // schedule chip colour
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  sessions     Session[]
+  notes        Note[]
+  assignments  JobAssignment[]
+
+  @@map("users")
+}
+
+/// Server-side sessions. Revocable, unlike a stateless JWT.
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ============================================================
+// Catalogue
+// ============================================================
+
+/// A service the company sells, plus the formula used to estimate how
+/// long it takes. Fully editable from the CRM so pricing/timing can be
+/// tuned without a deploy.
+model Service {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  blurb       String // one-line summary for cards
+  description String // long copy for the detail section
+  category    String  @default("residential") // residential | commercial | turnover | specialty
+  icon        String  @default("sparkle")
+
+  // --- Pricing ---
+  priceFrom Int? // cents; null = "quote only"
+  priceUnit String @default("visit") // visit | hour | sqft | month
+  hourlyRate Int   @default(6500) // cents/hour used when quoting by time
+
+  // --- Estimated-time formula -------------------------------
+  // minutes = baseMinutes
+  //         + (sqFt / 1000) * minutesPer1kSqFt
+  //         + bedrooms * minutesPerBedroom
+  //         + bathrooms * minutesPerBathroom
+  // ...then scaled by condition and frequency multipliers.
+  baseMinutes        Int @default(60)
+  minutesPer1kSqFt   Int @default(45)
+  minutesPerBedroom  Int @default(20)
+  minutesPerBathroom Int @default(25)
+  /// Extra minutes for setup/teardown/supplies on every visit.
+  setupMinutes       Int @default(15)
+
+  features  String  @default("[]") // JSON array of strings
+  featured  Boolean @default(false)
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs  Job[]
+  leads Lead[]
+
+  @@index([active, sortOrder])
+  @@map("services")
+}
+
+/// A named add-on that bolts onto a job (inside fridge, oven, windows…).
+/// Kept separate from Service so it can attach to any service.
+model AddOn {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  minutes   Int     @default(20)
+  price     Int     @default(2500) // cents
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  jobAddOns JobAddOn[]
+
+  @@map("add_ons")
+}
+
+// ============================================================
+// People & places
+// ============================================================
+
+/// A paying customer. Addresses live here so travel can be computed.
+model Client {
+  id      String  @id @default(cuid())
+  name    String
+  email   String?
+  phone   String?
+  company String?
+
+  // --- Location, for travel maths ---
+  address String?
+  city    String? @default("Rutland")
+  state   String? @default("VT")
+  zip     String?
+  lat     Float?
+  lng     Float?
+
+  // --- Property profile, feeds the time estimator ---
+  propertyType String @default("residential") // residential | commercial | airbnb
+  squareFeet   Int?
+  bedrooms     Int?
+  bathrooms    Int?
+  /// 1 = spotless upkeep, 5 = heavy first-time deep clean.
+  conditionLevel Int  @default(3)
+
+  frequency String  @default("one-time") // one-time | weekly | biweekly | monthly
+  rate      Int? // cents; agreed recurring rate
+  notes     String?
+  gateCode  String?
+  status    String  @default("active") // active | paused | former
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs     Job[]
+  invoices Invoice[]
+  noteList Note[]
+  leadId   String?
+
+  @@index([status, name])
+  @@map("clients")
+}
+
+/// An inbound quote request from the website. Converts into a Client.
+model Lead {
+  id      String  @id @default(cuid())
+  name    String
+  email   String
+  phone   String?
+  company String?
+
+  address String?
+  city    String?
+  zip     String?
+
+  propertyType String  @default("residential")
+  serviceId    String?
+  squareFeet   Int?
+  bedrooms     Int?
+  bathrooms    Int?
+  frequency    String? // one-time | weekly | biweekly | monthly
+  message      String?
+  preferredDate String?
+
+  /// Snapshot of the estimator at submission time, so the owners see
+  /// the same number the visitor saw.
+  estimatedMinutes Int?
+  estimatedPrice   Int? // cents
+
+  status   String @default("new") // new | contacted | quoted | won | lost
+  priority String @default("normal") // low | normal | high
+  source   String @default("website") // website | facebook | phone | referral | walk-in
+  lostReason String?
+
+  convertedClientId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  notes   Note[]
+
+  @@index([status, createdAt])
+  @@map("leads")
+}
+
+// ============================================================
+// Work
+// ============================================================
+
+/// A scheduled clean. The heart of the CRM.
+model Job {
+  id        String  @id @default(cuid())
+  clientId  String
+  serviceId String?
+
+  scheduledFor DateTime
+  status       String   @default("scheduled") // scheduled | in_progress | completed | cancelled | no_show
+
+  // --- ESTIMATED TIME ---------------------------------------
+  /// Output of the estimator (service formula + add-ons + multipliers).
+  estimatedMinutes Int     @default(120)
+  /// Owner override. When set, this wins over estimatedMinutes.
+  overrideMinutes  Int?
+  /// Human-readable trace of how the estimate was produced, so a number
+  /// on screen is never unexplained. JSON array of {label, minutes}.
+  estimateBreakdown String @default("[]")
+
+  /// Clock-in/clock-out, set from the job detail screen.
+  startedAt   DateTime?
+  completedAt DateTime?
+  /// Derived from the clock, but stored so history survives edits.
+  actualMinutes Int?
+
+  // --- TRAVEL ------------------------------------------------
+  /// Drive time to this job from the previous stop (or HQ if first).
+  travelMinutes Int     @default(0)
+  travelMiles   Float   @default(0)
+  /// Where the drive started: "hq" or the id of the preceding job.
+  travelFromId  String?
+  travelFromLabel String @default("HQ")
+  /// Mileage reimbursement owed for this leg, in cents.
+  travelCost    Int     @default(0)
+  travelBillable Boolean @default(false)
+
+  // --- Money -------------------------------------------------
+  price     Int? // cents, what the client is charged
+  /// Labour cost = crew hourly rates x hours. Cached for reporting.
+  laborCost Int  @default(0)
+
+  notes        String?
+  internalNotes String?
+  recurrence   String  @default("none") // none | weekly | biweekly | monthly
+  /// Links generated occurrences back to the job they repeat from.
+  seriesId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client      Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service     Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  assignments JobAssignment[]
+  addOns      JobAddOn[]
+  invoice     Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  invoiceId   String?
+
+  @@index([scheduledFor])
+  @@index([status, scheduledFor])
+  @@index([clientId, scheduledFor])
+  @@map("jobs")
+}
+
+/// Which cleaners are on a job. Many-to-many with a payload.
+model JobAssignment {
+  id     String @id @default(cuid())
+  jobId  String
+  userId String
+  /// Crew size divides the estimate — two cleaners halve wall-clock time.
+  role   String @default("cleaner") // lead | cleaner
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, userId])
+  @@index([userId])
+  @@map("job_assignments")
+}
+
+/// An add-on selected for a specific job. Snapshots minutes/price so
+/// later edits to the AddOn catalogue don't rewrite history.
+model JobAddOn {
+  id      String @id @default(cuid())
+  jobId   String
+  addOnId String
+  minutes Int
+  price   Int
+
+  job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  addOn AddOn @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, addOnId])
+  @@map("job_add_ons")
+}
+
+// ============================================================
+// Money
+// ============================================================
+
+model Invoice {
+  id       String @id @default(cuid())
+  number   String @unique
+  clientId String
+
+  status   String    @default("draft") // draft | sent | paid | overdue | void
+  issuedAt DateTime  @default(now())
+  dueAt    DateTime?
+  paidAt   DateTime?
+
+  subtotal Int @default(0) // cents
+  travel   Int @default(0) // billable mileage, cents
+  tax      Int @default(0)
+  total    Int @default(0)
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobs   Job[]
+
+  @@index([status, issuedAt])
+  @@map("invoices")
+}
+
+// ============================================================
+// Content & context
+// ============================================================
+
+/// Free-text activity log. Polymorphic: hangs off a lead or a client.
+model Note {
+  id       String @id @default(cuid())
+  body     String
+  kind     String @default("note") // note | call | email | text
+  authorId String?
+  leadId   String?
+  clientId String?
+
+  createdAt DateTime @default(now())
+
+  author User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+  @@index([clientId, createdAt])
+  @@map("notes")
+}
+
+/// A photo shown on the public site. Uploaded and curated in the CRM.
+model GalleryItem {
+  id        String  @id @default(cuid())
+  filename  String  @unique
+  title     String
+  caption   String?
+  category  String  @default("work") // work | team | before-after | place
+  width     Int     @default(1200)
+  height    Int     @default(900)
+  published Boolean @default(false)
+  featured  Boolean @default(false)
+  sortOrder Int     @default(0)
+  sourceUrl String? // original Facebook permalink, when known
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@map("gallery_items")
+}
+
+/// A customer review. Sourced from Facebook or entered by the owners.
+model Testimonial {
+  id        String  @id @default(cuid())
+  author    String
+  role      String?
+  location  String?
+  quote     String
+  rating    Int     @default(5)
+  source    String  @default("facebook") // facebook | google | direct
+  published Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@map("testimonials")
+}
+
+/// Editable key/value site copy and operating config, including the
+/// travel settings (HQ address, mileage rate) the estimator depends on.
+model Setting {
+  key       String   @id
+  value     String
+  label     String
+  hint      String?
+  group     String   @default("general") // general | contact | travel | estimating | seo
+  type      String   @default("text") // text | textarea | boolean | number | money
+  sortOrder Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
