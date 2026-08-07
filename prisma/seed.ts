@@ -685,6 +685,162 @@ async function main() {
   );
 
   // ---------------------------------------------------------
+  // Gallery
+  //
+  // These files are checked into public/gallery. Keep their database rows
+  // in the seed as well so a production build does not publish an empty
+  // gallery after the reset above.
+  // ---------------------------------------------------------
+  await prisma.galleryItem.createMany({
+    data: [
+      {
+        filename: "tub-before-after.png",
+        title: "Tub deep clean",
+        caption: "Years of buildup, one visit. No harsh scratching, no damage to the finish.",
+        category: "before-after",
+        featured: true,
+      },
+      {
+        filename: "oven-before.png",
+        title: "Oven — before",
+        caption: "Baked-on grease on every surface, including the door glass.",
+        category: "before-after",
+      },
+      {
+        filename: "oven-during.png",
+        title: "Oven — treatment",
+        caption: "Degreaser left to work. Rushing this step is why most ovens come out streaked.",
+        category: "before-after",
+      },
+      {
+        filename: "oven-after.png",
+        title: "Oven — after",
+        caption: "Racks, walls, and door glass back to clean.",
+        category: "before-after",
+        featured: true,
+      },
+      {
+        filename: "commercial-restroom-before-after.png",
+        title: "Commercial restroom",
+        caption: "After-hours service for a business — fixtures, sinks, and floors reset before opening.",
+        category: "before-after",
+        featured: true,
+      },
+      {
+        filename: "toilet-before.png",
+        title: "Toilet — before",
+        caption: "Heavy mineral staining and neglect.",
+        category: "before-after",
+      },
+      {
+        filename: "toilet-after.png",
+        title: "Toilet — after",
+        caption: "Fully sanitised, inside and out.",
+        category: "before-after",
+      },
+      {
+        filename: "banister-before.png",
+        title: "Banister — before",
+        caption: "Spindles and handrail after a renovation.",
+        category: "before-after",
+      },
+      {
+        filename: "banister-after.png",
+        title: "Banister — after",
+        caption: "Every spindle done by hand — the part most cleans skip.",
+        category: "before-after",
+        featured: true,
+      },
+      {
+        filename: "hardwood-floors-before.png",
+        title: "Hardwood — before",
+        caption: "Construction dust and residue ground into the finish.",
+        category: "before-after",
+      },
+      {
+        filename: "hardwood-floors-after.png",
+        title: "Hardwood — after",
+        caption: "Post-renovation floor clean, ready to hand over.",
+        category: "before-after",
+      },
+      {
+        filename: "basement-stairs-before.png",
+        title: "Basement stairs — before",
+        caption: "Debris and grime on every tread.",
+        category: "before-after",
+      },
+      {
+        filename: "basement-stairs-after.png",
+        title: "Basement stairs — after",
+        caption: "Treads and landing cleared and washed down.",
+        category: "before-after",
+      },
+      {
+        filename: "airbnb-turnover.png",
+        title: "Airbnb turnover",
+        caption: "Beds remade, linens fresh, surfaces staged — photographed before lock-up so the host knows it's guest-ready.",
+        category: "work",
+        featured: true,
+      },
+      {
+        filename: "refrigerator-detailed.png",
+        title: "Refrigerator detailed",
+        caption: "Shelves, drawers, and seals — an add-on worth every minute.",
+        category: "work",
+      },
+      {
+        filename: "refrigerator-interior.png",
+        title: "Refrigerator interior",
+        caption: "Emptied, wiped down, and deodorised for a move-out.",
+        category: "work",
+      },
+      {
+        filename: "tub-shower-surround.png",
+        title: "Tub & shower surround",
+        caption: "Soap scum and hard-water film off the full surround.",
+        category: "work",
+      },
+      {
+        filename: "bathroom-vanity.png",
+        title: "Bathroom reset",
+        caption: "Vanity, mirror, and tile floor for a move-out clean.",
+        category: "work",
+      },
+      {
+        filename: "living-room-floors.png",
+        title: "Move-out living room",
+        caption: "Empty-home clean done to inspection standard.",
+        category: "work",
+      },
+      {
+        filename: "entry-door.png",
+        title: "Entry door & glass",
+        caption: "Glass, blinds, frame, and hardware — the details that get noticed.",
+        category: "work",
+      },
+      {
+        filename: "powder-room.png",
+        title: "Powder room",
+        caption: "Small spaces still get the full treatment.",
+        category: "work",
+      },
+      {
+        filename: "kitchen-cabinets.png",
+        title: "Kitchen cabinetry",
+        caption: "Cabinet fronts degreased, range and cooktop detailed.",
+        category: "work",
+      },
+    ].map((item, sortOrder) => ({
+      ...item,
+      width: 414,
+      height: 414,
+      published: true,
+      featured: item.featured ?? false,
+      sortOrder,
+    })),
+  });
+
+  // ---------------------------------------------------------
   // Chat conversations
   //
   // Samples only — the website widget is styled but not yet wired to a
