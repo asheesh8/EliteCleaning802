@@ -151,12 +151,46 @@ deploy needed.
 
 ## Deploying
 
-Switch `datasource db { provider }` in `prisma/schema.prisma` to
-`postgresql`, point `DATABASE_URL` at the database, and swap the adapter
-in `src/lib/db.ts`. No model changes are needed — nothing SQLite-specific
-is used.
+### How it deploys today (demo mode)
 
-Note that gallery uploads write to `public/gallery`, which does not
-survive on ephemeral filesystems (Vercel). Move uploads to object
-storage before deploying there; `src/app/crew/(app)/gallery/actions.ts`
-is the only file that writes images.
+`vercel.json` sets the build command to `build:standalone`, which
+provisions and seeds a SQLite database during the build:
+
+```
+prisma db push && tsx prisma/seed.ts && next build
+```
+
+The database file is **not** in git — it's created fresh on every build,
+so the deployed site always comes up with working demo data. Two details
+make this survive a serverless host:
+
+- `outputFileTracingIncludes` in `next.config.ts` forces `prisma/dev.db`
+  into the function bundle. Nothing imports the file, so tracing can't
+  discover it otherwise, and the deploy would build green then 500.
+- `src/lib/db.ts` copies the database to `/tmp` on cold start, because
+  the bundle filesystem is read-only and SQLite needs to write a journal
+  even to serve reads.
+
+**What this means:** everything is browsable and the CRM fully works,
+but *writes do not persist*. A lead submitted through the contact form,
+a clocked-in job, or an uploaded photo lives only for the life of that
+serverless instance, and every deploy resets to the seed. That is fine
+for showing the client. It is not fine for real customers.
+
+### Going live properly
+
+Switch to Postgres — the schema needs no model changes, since nothing
+SQLite-specific is used:
+
+1. Provision a database (Vercel Postgres, Neon, or Supabase).
+2. Set `DATABASE_URL` in the Vercel project's environment variables.
+   `src/lib/db.ts` already passes any non-`file:` URL straight through.
+3. In `prisma/schema.prisma`, change `provider = "sqlite"` to
+   `provider = "postgresql"`.
+4. Swap the adapter in `src/lib/db.ts` for `@prisma/adapter-pg`.
+5. Change the build command back to `next build` in `vercel.json`, and
+   run migrations and the seed once against the new database.
+
+Gallery uploads also need object storage before real use —
+`src/app/crew/(app)/gallery/actions.ts` is the only file that writes
+images, so it's a single swap.
