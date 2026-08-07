@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import Script from "next/script";
 import { brand } from "@/lib/brand";
 import "./globals.css";
 
@@ -39,15 +40,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
-        {/* Applied before paint so the theme never flashes. */}
-        <script
+      <body className={`${inter.variable} ${fraunces.variable}`}>
+        {/* Light by default; an explicit saved dark preference still wins. */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("ec802-theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`,
+            __html: `(function(){try{if(localStorage.getItem("ec802-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}})()`,
           }}
         />
-      </head>
-      <body className={`${inter.variable} ${fraunces.variable}`}>
         {children}
       </body>
     </html>

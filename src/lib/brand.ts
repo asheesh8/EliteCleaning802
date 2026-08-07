@@ -26,6 +26,6 @@ export const brand = {
   facebook: "https://www.facebook.com/EliteCleaningLLCVT/",
 
   // Defaults only. The Settings table wins wherever it has a value.
-  phone: "(802) 555-0182",
-  email: "hello@elitecleaning802.com",
+  phone: "(802) 417-4764",
+  email: "elitecleaning802@gmail.com",
 } as const;
