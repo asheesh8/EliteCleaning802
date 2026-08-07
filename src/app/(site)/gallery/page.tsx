@@ -61,24 +61,34 @@ export default async function GalleryPage() {
             </div>
           </div>
         ) : (
-          <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4">
+          // A grid rather than masonry: masonry fills column-by-column,
+          // which scatters a before/after pair to opposite ends of the
+          // page. Reading order is the whole point with this content.
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
               <figure
                 key={item.id}
-                className="break-inside-avoid overflow-hidden rounded-card border border-border-base bg-surface shadow-e1"
+                className="group flex flex-col overflow-hidden rounded-card border border-border-base bg-surface shadow-e1 transition-shadow hover:shadow-e2"
               >
-                <Image
-                  src={`/gallery/${item.filename}`}
-                  alt={item.title}
-                  width={item.width}
-                  height={item.height}
-                  className="w-full object-cover"
-                />
-                {item.caption && (
-                  <figcaption className="px-4 py-3 text-sm text-text-muted">
-                    {item.caption}
-                  </figcaption>
-                )}
+                <div className="relative aspect-square overflow-hidden bg-surface-2">
+                  <Image
+                    src={`/gallery/${item.filename}`}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                </div>
+                <figcaption className="flex flex-1 flex-col px-4 py-3.5">
+                  <span className="text-sm font-semibold text-text">
+                    {item.title}
+                  </span>
+                  {item.caption && (
+                    <span className="mt-1 text-sm leading-relaxed text-text-muted">
+                      {item.caption}
+                    </span>
+                  )}
+                </figcaption>
               </figure>
             ))}
           </div>

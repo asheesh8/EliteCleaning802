@@ -18,7 +18,7 @@ export default async function CrmLayout({
   const user = await requireUser();
   const { start, end } = dayBounds(new Date());
 
-  const [newLeads, todayJobs] = await Promise.all([
+  const [newLeads, todayJobs, openChats] = await Promise.all([
     prisma.lead.count({ where: { status: "new" } }),
     prisma.job.count({
       where: {
@@ -26,11 +26,17 @@ export default async function CrmLayout({
         status: { in: ["scheduled", "in_progress"] },
       },
     }),
+    prisma.conversation.count({ where: { status: "open" } }),
   ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-sunken lg:flex-row">
-      <CrmNav user={user} newLeads={newLeads} todayJobs={todayJobs} />
+      <CrmNav
+        user={user}
+        newLeads={newLeads}
+        todayJobs={todayJobs}
+        openChats={openChats}
+      />
       <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-10">
         {children}
       </main>

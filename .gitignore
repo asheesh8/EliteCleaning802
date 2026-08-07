@@ -26,4 +26,9 @@ prisma/*.db-*
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Staging folder for `npm run gallery:import`. Imported photos live in
+# public/gallery; keeping both would double the repo for no reason.
+photos-inbox/*
+!photos-inbox/README.md
+
 .vercel

@@ -40,6 +40,8 @@ async function main() {
   console.log("Seeding Elite Cleaning 802…");
 
   // Idempotent: wipe in FK-safe order so `npm run db:seed` can be re-run.
+  await prisma.chatMessage.deleteMany();
+  await prisma.conversation.deleteMany();
   await prisma.jobAddOn.deleteMany();
   await prisma.jobAssignment.deleteMany();
   await prisma.job.deleteMany();
@@ -681,6 +683,85 @@ async function main() {
       },
     ].map((data) => prisma.testimonial.create({ data })),
   );
+
+  // ---------------------------------------------------------
+  // Chat conversations
+  //
+  // Samples only — the website widget is styled but not yet wired to a
+  // backend, so nothing real arrives here until that's connected.
+  // ---------------------------------------------------------
+  const minutesAgo = (n: number) => new Date(Date.now() - n * 60000);
+
+  const chats: Array<{
+    name: string;
+    email?: string;
+    phone?: string;
+    status: string;
+    ago: number;
+    messages: Array<[role: string, body: string, ago: number]>;
+  }> = [
+    {
+      name: "Dana Ferrell",
+      email: "dferrell@example.com",
+      phone: "(802) 555-0146",
+      status: "open",
+      ago: 40,
+      messages: [
+        ["assistant", "Hi Dana — thanks for reaching out. What can we help with?", 42],
+        ["visitor", "Hi! We just closed on a place on Grove St and it needs a deep clean before we move in next Friday. Is that doable?", 41],
+        ["visitor", "It's about 2,000 sq ft, 3 bed 2 bath. Previous owners left it pretty rough.", 40],
+      ],
+    },
+    {
+      name: "Marcus Hill",
+      email: "m.hill@example.com",
+      status: "answered",
+      ago: 260,
+      messages: [
+        ["assistant", "Hi Marcus — thanks for reaching out. What can we help with?", 300],
+        ["visitor", "Do you do Airbnb turnovers in Killington? I have two units.", 298],
+        ["staff", "We do — Killington is one of our regular runs. Same-day turnovers with linens and restock, and we send photos before we lock up.", 265],
+        ["staff", "Are you working to a 11am checkout / 3pm check-in window?", 264],
+        ["visitor", "Yes exactly. What would two units run me?", 260],
+      ],
+    },
+    {
+      name: "Jen Alvarez",
+      phone: "(802) 555-0188",
+      status: "closed",
+      ago: 2600,
+      messages: [
+        ["assistant", "Hi Jen — thanks for reaching out. What can we help with?", 2700],
+        ["visitor", "How much for a monthly clean on a small 2 bedroom?", 2690],
+        ["staff", "For a 2 bed around 1,100 sq ft on a monthly schedule we'd be right around $145 a visit. Happy to do a free walkthrough first.", 2640],
+        ["visitor", "That works. I'll call to book — thank you!", 2600],
+      ],
+    },
+  ];
+
+  for (const chat of chats) {
+    const conversation = await prisma.conversation.create({
+      data: {
+        visitorName: chat.name,
+        visitorEmail: chat.email ?? null,
+        visitorPhone: chat.phone ?? null,
+        status: chat.status,
+        startedAt: minutesAgo(chat.messages[0][2] as number),
+        lastMessageAt: minutesAgo(chat.ago),
+      },
+    });
+
+    for (const [role, body, ago] of chat.messages) {
+      await prisma.chatMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: role as string,
+          body: body as string,
+          createdAt: minutesAgo(ago as number),
+        },
+      });
+    }
+  }
 
   // ---------------------------------------------------------
   // Settings

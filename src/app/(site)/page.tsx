@@ -4,18 +4,33 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { QuoteEstimator } from "@/components/site/QuoteEstimator";
+import { BeforeAfter } from "@/components/site/BeforeAfter";
 import { brand } from "@/lib/brand";
-import { getServices, getTestimonials, getAddOns, getGallery } from "@/lib/data";
+import {
+  getServices,
+  getTestimonials,
+  getAddOns,
+  getGallery,
+  getFeaturedGallery,
+} from "@/lib/data";
+import { splitPairs } from "@/lib/gallery-pairs";
 import { getSiteSettings } from "@/lib/settings";
 
 export default async function HomePage() {
-  const [services, testimonials, addOns, gallery, settings] = await Promise.all([
-    getServices(),
-    getTestimonials(),
-    getAddOns(),
-    getGallery(),
-    getSiteSettings(),
-  ]);
+  const [services, testimonials, addOns, gallery, featuredPhotos, settings] =
+    await Promise.all([
+      getServices(),
+      getTestimonials(),
+      getAddOns(),
+      getGallery(),
+      getFeaturedGallery(4),
+      getSiteSettings(),
+    ]);
+
+  // Comparison sliders are the most persuasive thing on the page, so the
+  // three strongest pairs lead. Everything else stays in /gallery.
+  const { pairs } = splitPairs(gallery);
+  const showcase = pairs.slice(0, 3);
 
   const featured = services.filter((s) => s.featured).slice(0, 3);
 
@@ -118,6 +133,54 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ================= Before / after ================= */}
+      {showcase.length > 0 && (
+        <section className="border-y border-border-base bg-surface-2">
+          <div className="container-page py-20 lg:py-24">
+            <div className="reveal-on-scroll mx-auto max-w-2xl text-center">
+              <p className="text-2xs font-semibold uppercase tracking-[0.16em] text-brand">
+                See the difference
+              </p>
+              <h2 className="mt-3 font-display text-headline font-semibold text-text">
+                Drag to see what a real clean looks like.
+              </h2>
+              <p className="mt-5 leading-relaxed text-text-muted">
+                No staging, no stock photos — these are jobs we&rsquo;ve done
+                across {settings.serviceArea}.
+              </p>
+            </div>
+
+            <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {showcase.map((pair, i) => (
+                <div
+                  key={pair.key}
+                  className="reveal-on-scroll"
+                  style={{ animationDelay: `${i * 90}ms` }}
+                >
+                  <BeforeAfter
+                    beforeSrc={`/gallery/${pair.before.filename}`}
+                    afterSrc={`/gallery/${pair.after.filename}`}
+                    title={pair.title}
+                    caption={pair.caption}
+                    priority={i === 0}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 text-center">
+              <Link
+                href="/gallery"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+              >
+                See more of our work
+                <Icon name="arrow" className="size-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ================= Instant estimate ================= */}
       <section className="border-y border-border-base bg-surface-2">
@@ -222,7 +285,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {gallery.slice(0, 4).map((item) => (
+            {featuredPhotos.map((item) => (
               <div
                 key={item.id}
                 className="reveal-on-scroll aspect-4/3 overflow-hidden rounded-card ring-1 ring-border-base"

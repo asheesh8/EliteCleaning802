@@ -34,9 +34,38 @@ export const getTestimonials = cache(async () =>
   }),
 );
 
+/**
+ * Ordered by sortOrder alone, deliberately.
+ *
+ * Sorting `featured` first would lift "Oven — after" to the top of the
+ * page and strand "Oven — before" three rows below it. Curated order is
+ * what keeps a before/after pair side by side; `featured` only decides
+ * what the home page shows — see `getFeaturedGallery`.
+ */
 export const getGallery = cache(async () =>
   prisma.galleryItem.findMany({
     where: { published: true },
-    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
+    orderBy: { sortOrder: "asc" },
   }),
 );
+
+/** The handful of shots strong enough to lead the home page. */
+export const getFeaturedGallery = cache(async (take = 4) => {
+  const featured = await prisma.galleryItem.findMany({
+    where: { published: true, featured: true },
+    orderBy: { sortOrder: "asc" },
+    take,
+  });
+
+  if (featured.length >= take) return featured;
+
+  // Not enough featured picks yet — top up from the rest so the home
+  // page strip never renders half-empty.
+  const filler = await prisma.galleryItem.findMany({
+    where: { published: true, featured: false },
+    orderBy: { sortOrder: "asc" },
+    take: take - featured.length,
+  });
+
+  return [...featured, ...filler];
+});

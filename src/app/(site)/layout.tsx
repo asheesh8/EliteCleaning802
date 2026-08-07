@@ -1,5 +1,6 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { ChatWidget } from "@/components/site/ChatWidget";
 import { getSiteSettings } from "@/lib/settings";
 
 export default async function SiteLayout({
@@ -20,6 +21,7 @@ export default async function SiteLayout({
         hours={s.hours}
         facebook={s.facebook}
       />
+      <ChatWidget phone={s.phone} />
     </div>
   );
 }

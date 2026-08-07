@@ -23,10 +23,12 @@ export function CrmNav({
   user,
   newLeads,
   todayJobs,
+  openChats,
 }: {
   user: { name: string; email: string; role: string };
   newLeads: number;
   todayJobs: number;
+  openChats: number;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -44,6 +46,7 @@ export function CrmNav({
       label: "Pipeline",
       items: [
         { href: "/crew/leads", label: "Leads", icon: "quote", badge: newLeads },
+        { href: "/crew/messages", label: "Messages", icon: "chat", badge: openChats },
         { href: "/crew/clients", label: "Clients", icon: "users" },
         { href: "/crew/invoices", label: "Invoices", icon: "invoice" },
       ],

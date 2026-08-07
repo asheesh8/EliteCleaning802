@@ -139,6 +139,10 @@ const paths: Record<string, React.ReactNode> = {
   shield: <path d="M12 3l8 3v6c0 5-3.5 8.3-8 9.5-4.5-1.2-8-4.5-8-9.5V6l8-3z" />,
   leaf: <path d="M20 4S8 4 6 12c-1 4 1.5 7 5 7 6 0 9-8 9-15zM6 20c1-5 4-8 8-10" />,
   chevron: <path d="M9 6l6 6-6 6" />,
+  chat: (
+    <path d="M21 11.5a8.4 8.4 0 01-9 8.4 9.3 9.3 0 01-3.3-.6L3 21l1.8-5A8.1 8.1 0 013.5 11.5a8.4 8.4 0 018.5-8.4 8.4 8.4 0 019 8.4z" />
+  ),
+  send: <path d="M21 3L10.5 13.5M21 3l-6.5 18-4-8-8-4L21 3z" />,
   play: <path d="M7 4l12 8-12 8V4z" />,
   pause: <path d="M8 4v16M16 4v16" />,
 };
