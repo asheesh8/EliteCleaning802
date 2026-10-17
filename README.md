@@ -21,8 +21,8 @@ npm run dev
 Website at `http://localhost:3000`, workspace at `/crew`.
 
 **Sign in:** `laura@elitecleaning802.com` or `lisa@elitecleaning802.com`
-— password `elite802`. Change these before this goes anywhere near
-production.
+with the password in `SEED_OWNER_PASSWORD`. If that isn't set, the seed
+generates one and prints it at the end of `npm run db:seed`.
 
 ---
 
@@ -139,7 +139,8 @@ deploy needed.
 
 ## Before launch
 
-- [ ] Change both owner passwords
+- [ ] Set `SEED_OWNER_PASSWORD` in the Vercel project (the demo deploy
+      reseeds on every build, so this is the owners' password there)
 - [ ] Set the real phone and email in `/crew/settings`
 - [ ] Replace the four placeholder reviews at `/crew/reviews` with real
       Facebook recommendations (they're written to match the page's tone,

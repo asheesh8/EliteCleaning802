@@ -28,6 +28,12 @@ async function hashPassword(password: string) {
   return `${salt}:${derived.toString("hex")}`;
 }
 
+// The owners' password comes from SEED_OWNER_PASSWORD so it never lives in this
+// public repo. Without it, a random one is generated and printed at the end of
+// the seed, which keeps local setup zero-config. The demo deploy reseeds on
+// every build, so set the variable in Vercel for a password that stays put.
+const ownerPassword = process.env.SEED_OWNER_PASSWORD || randomBytes(9).toString("base64url");
+
 /** Days from today, at a given local hour. */
 function at(dayOffset: number, hour: number, minute = 0) {
   const d = new Date();
@@ -60,7 +66,7 @@ async function main() {
   // ---------------------------------------------------------
   // Owners
   // ---------------------------------------------------------
-  const password = await hashPassword("elite802");
+  const password = await hashPassword(ownerPassword);
 
   const laura = await prisma.user.create({
     data: {
@@ -1051,7 +1057,11 @@ async function main() {
   console.log(`✓ ${services.length} services, ${addOns.length} add-ons`);
   console.log(`✓ ${clients.length} clients, ${jobSeeds.length} jobs, 3 leads`);
   console.log("✓ Owners: laura@elitecleaning802.com / lisa@elitecleaning802.com");
-  console.log("  Password: elite802");
+  console.log(
+    process.env.SEED_OWNER_PASSWORD
+      ? "  Password: from SEED_OWNER_PASSWORD"
+      : `  Password: ${ownerPassword} (generated — set SEED_OWNER_PASSWORD to choose one)`,
+  );
 }
 
 main()
