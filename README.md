@@ -206,4 +206,4 @@ Names only — never commit values. Local development needs none of them.
 | `DATABASE_URL` | SQLite file (`file:./prisma/dev.db`) locally; a Postgres URL once live |
 | `SEED_OWNER_PASSWORD` | Owners' password created by `npm run db:seed` (and by every demo build) |
 
-Sessions are stored server-side in the database (`src/lib/auth.ts`), so no session-signing secret is read today.
+Session cookies are HMAC-signed with the user's own password hash (`src/lib/session-token.ts`), so no separate session secret is read today, and changing a password signs that user out everywhere.
