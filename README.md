@@ -3,6 +3,8 @@
 Marketing website + private CRM for Laura and Lisa's cleaning business in
 Rutland County, Vermont.
 
+**Live:** https://elite-cleaning802.vercel.app (demo mode, see [Deploying](#deploying))
+
 **Stack:** Next.js 16 (App Router) · React 19 · Tailwind v4 · Prisma 7 ·
 SQLite · TypeScript. No UI framework dependency — the component kit and
 icon set are local, so nothing breaks on someone else's release schedule.
@@ -194,3 +196,14 @@ SQLite-specific is used:
 Gallery uploads also need object storage before real use —
 `src/app/crew/(app)/gallery/actions.ts` is the only file that writes
 images, so it's a single swap.
+
+## Environment variables
+
+Names only — never commit values. Local development needs none of them.
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | SQLite file (`file:./prisma/dev.db`) locally; a Postgres URL once live |
+| `SEED_OWNER_PASSWORD` | Owners' password created by `npm run db:seed` (and by every demo build) |
+
+Session cookies are HMAC-signed with the user's own password hash (`src/lib/session-token.ts`), so no separate session secret is read today, and changing a password signs that user out everywhere.
